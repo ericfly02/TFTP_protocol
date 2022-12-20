@@ -11,7 +11,6 @@ import math
 # Gracias a la funcion struct, podremos crear el paquete
 
 op_codes = {
-    "RRQ" : struct.pack('BB', 0, 1),
     "WRQ" : struct.pack('BB', 0, 2),
     "DATA": struct.pack('BB', 0, 3),
     "ACK" : struct.pack('BB', 0, 4),
@@ -45,7 +44,6 @@ if(codigo=="ERR"):
     print('ERROR: El MSS esta fuera de rango o bien no es potencia de 2!!')
 else:
     print('Cliente CONNECTADO! {ip} , {op}'.format(ip = clientAddress, op = codigo))
-
 
 
 ############################## PUT #########################################
@@ -160,7 +158,7 @@ if(codigo == "WRQ"):
 
                 print("El mensaje se ha recivido correctamente!")
                 print('\n--------------------------------------------------------------')
-                print('                      MENSAJE RECIVIDO')
+                print('                      MENSAJE RECIVIDO                          ')
                 print('--------------------------------------------------------------\n')
 
                 f = open("mensaje_usuario.txt", "r")
