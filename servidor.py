@@ -26,7 +26,7 @@ try:
     numero_secuencia = 1 # Inicializamos el numero de secuencia a 1
     numero_secuencia_ack =  1 # Inicializamos el numero de secuencia a 1
 
-    probabilidad_fallo = 0.5
+    probabilidad_fallo = 0
 
     serverPort = 12001
     serverSocket.bind(('', serverPort))
@@ -60,7 +60,7 @@ try:
     serverSocket.sendto(oack, clientAddress)
     print("ENVIANDO OACK-> Blocksize = ",size)
 
-    print('PUT --> Del cliente {ip}'.format( ip = clientAddress))
+    print('SUBIENDO ARCHIVO DEL CLIENTE --> {ip}'.format( ip = clientAddress))
 
     #Esperando para recivir los datos del cliente
     datos, clientAddress = serverSocket.recvfrom(4+int(size))
@@ -81,6 +81,9 @@ try:
 
     # Creamos el fichero con el nombre del archivo "mensaje_usuario.txt" y guardamos el mensaje
     file = open("mensaje_usuario.txt", "wb")
+
+    #Escribimos en el archivo los datos recividos  
+    file.write(datos_archivo)
 
     while(datos_archivo):
 
