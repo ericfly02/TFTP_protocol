@@ -85,12 +85,10 @@ def put(mss, mensaje, Timeout, ip, puerto, probabilidad_fallo):
 
         # Enviamos primer paquete WRQ
         wrq = op_codes["WRQ"] + bytes(mode, "utf-8") + struct.pack('B', 0) + bytes('blocksize', "utf-8") + struct.pack('B', 0) + struct.pack('>H', mss)+ struct.pack('B', 0)
-        recive_oack=True
-        #Hacemos un bucle para enviar la instruccion WRQ i
-        #recivir el OACK del servidor para confirmar la conexion WRQ.
-        #Si el cliente no recive el OACK aplica un timeout i vuelve a enviar el WRQ
 
-
+        # Enviamos la instruccion WRQ i recivimos el OACK del servidor para confirmar la conexion WRQ.
+        # Si el cliente no recive el OACK aplica un timeout i vuelve a enviar el WRQ
+ 
         try:
             # Se envía el paquete WRQ al servidor especificando el nombre del servidor y el puerto de destino.              
             clientSocket.sendto(wrq, (serverName, serverPort))
@@ -118,11 +116,21 @@ def put(mss, mensaje, Timeout, ip, puerto, probabilidad_fallo):
         line = f.read(mss)
         
         # Generamos datos
+        # Crear un paquete de datos con el opcode "DATA" y el número de secuencia actual (numero_secuencia)
+        # El opcode "DATA" indica al servidor que este paquete contiene datos para ser almacenados
+        # El número de secuencia es utilizado para identificar cada bloque de datos y para asegurar que los 
+        # datos son recibidos correctamente
         datos = op_codes["DATA"] + struct.pack('>H', numero_secuencia)
-        if(isinstance(line, str)):
+
+        # Comprueba si los datos son una cadena de caracteres.
+        if(isinstance(datos, str)):
+            # Si los datos son una cadena de caracteres se convierten a bytes utilizando la función bytes y 
+            # se añaden al paquete de datos
             datos = datos + bytes(line, "utf-8")
         else:
+            # Si los datos no son una cadena de caracteres se añaden directamente al paquete de datos
             datos = datos + line
+
 
         # Mientras aun haya datos en el fichero, los enviamos
         while(len(line)>0):
@@ -139,23 +147,28 @@ def put(mss, mensaje, Timeout, ip, puerto, probabilidad_fallo):
                             print(('PAQUETE DATOS PERDIDO NUMERO: {}').format(numero_secuencia))
                         else:
                             try:
-                                #Envia el paquete de datos
+                                # Envia el paquete de datos
                                 clientSocket.sendto(datos, (serverName, serverPort))
-                                #Activa el tiempo del timeout
+                                # Activa el tiempo del timeout
                                 clientSocket.settimeout(timeout/1000)
                                 print("Enviando DATOS: {nseq} --> {size_file}".format(nseq = numero_secuencia, size_file = len(line)))
-                                #Recive el ack del dato enviado
+                                # Recive el ack del dato enviado
                                 ack, add = clientSocket.recvfrom(4)
-                                #Desactiva el tiempo del timeout
+                                # Desactiva el tiempo del timeout
                                 clientSocket.settimeout(None)
-                                    #Una vez recivido el ACK se pone la condicion a False i sale del bucle
+                                # Una vez recivido el ACK se pone la condicion a False i sale del bucle
                                 recive_ack=False
+                                # Utilizamos operadores de bits para extraer el número de secuencia del paquete de confirmación (ACK) recibido. 
+                                # El número de secuencia se encuentra en los bytes 2 y 3 del paquete. La operación "ack[2] << 8" desplaza el byte 2 8 bits a 
+                                # la izquierda y "ack[3] | ack[2] << 8" combina los dos bytes para obtener el número de secuencia completo.
                                 numero_ack = ack[3] | ack[2] << 8
                                 print("Reciviendo ACK: {ack}".format(ack = numero_ack))
+
                             except ConnectionResetError as e:
                                 print("Se ha enviado un ultimo paquete de datos con mss = {mss} i numero de sequencia = {seq}".format(mss = len(line), seq=numero_secuencia))
                                 print("Fichero enviado correctamente!")
-                                sys.exit()      
+                                sys.exit()    
+
                     except IOError as e:
                         print("TIMEOUT DE ",timeout," segundos ACTIVO!!")
                         time.sleep(timeout/1000)
@@ -165,32 +178,42 @@ def put(mss, mensaje, Timeout, ip, puerto, probabilidad_fallo):
             numero_secuencia += 1
             numero_secuencia = numero_secuencia % 65535
 
-            # si el numero de sequencia es igual a 0, lo cambiamos a 1 ya que
+            # Si el numero de sequencia es igual a 0, lo cambiamos a 1 ya que
             # implica que no ha acabado de enviar pero el numero de seqüencia 
-            #ha llegado a 0 por el modulo de 65535
+            # ha llegado a 0 por el modulo de 65535
             if(len(line)!=0):
                 if(numero_secuencia == 0):
                     numero_secuencia = 1
 
             # Si la longitud de los datos leidos es igual a la longitud de los paquetes
-            #Vuelve a leer ya que implica que no ha acabado de leer.
-            #Si la siguiente linea que lee esta vacia implicara que el tamaño del paquete
+            # Vuelve a leer ya que implica que no ha acabado de leer.
+            # Si la siguiente linea que lee esta vacia implicara que el tamaño del paquete
             # es modulo del mss
             if(len(line) == mss):
                 line = f.read(mss)
                 
                # Generamos datos
+               # Crear un paquete de datos con el opcode "DATA" y el número de secuencia actual (numero_secuencia)
+               # El opcode "DATA" indica al servidor que este paquete contiene datos para ser almacenados
+               # El número de secuencia es utilizado para identificar cada bloque de datos y para asegurar que los 
+               # datos son recibidos correctamente
                 datos = op_codes["DATA"] + struct.pack('>H', numero_secuencia)
+
+                # Comprueba si los datos son una cadena de caracteres.
                 if(isinstance(datos, str)):
+                    # Si los datos son una cadena de caracteres se convierten a bytes utilizando la función bytes y 
+                    # se añaden al paquete de datos
                     datos = datos + bytes(line, "utf-8")
                 else:
+                    # Si los datos no son una cadena de caracteres se añaden directamente al paquete de datos
                     datos = datos + line
 
                 # Si la longitud del fichero es igual a 0 --> final de lectura del fichero
                 if(len(line) == 0):
                     line = bytes()
             
-            # Si la longitud de los datos leido no es igual a la longitud del mss, indica que es el ultimo paquete i que el fichero no es modulo del mss
+            # Si la longitud de los datos leido no es igual a la longitud del mss, indica que es el ultimo paquete i 
+            # que el fichero no es modulo del mss
             else:
                 print("Se ha enviado un ultimo paquete de datos con mss = {mss} i numero de sequencia = {seq}".format(mss = len(line), seq=numero_secuencia))
                 print("Fichero enviado correctamente!")
