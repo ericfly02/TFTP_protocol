@@ -26,7 +26,11 @@ try:
     numero_secuencia = 1 # Inicializamos el numero de secuencia a 1
     numero_secuencia_ack =  1 # Inicializamos el numero de secuencia a 1
 
-    probabilidad_fallo = 0
+    if len(sys.argv) != 2:
+        print("Debe proporcionar un argumento que indique la probabilidad de fallo")
+        sys.exit()
+    else:
+        probabilidad_fallo = float(sys.argv[1])*0.01
 
     serverPort = 12001
     serverSocket.bind(('', serverPort))
