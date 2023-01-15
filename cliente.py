@@ -61,7 +61,6 @@ def put(mss, mensaje, Timeout, ip, puerto, probabilidad_fallo):
     mss = int(mss.get("1.0", "end-1c"))
     mensaje = mensaje.get("1.0", "end-1c")
     timeout = int(Timeout.get("1.0", "end-1c"))
-    mode = "octet"
     serverName = ip.get("1.0", "end-1c")
     serverPort = int(puerto.get("1.0", "end-1c"))
     probabilidad_fallo = float(probabilidad_fallo.get("1.0", "end-1c"))*0.01
@@ -76,23 +75,22 @@ def put(mss, mensaje, Timeout, ip, puerto, probabilidad_fallo):
 
     # Gracias a la funcion struct, podremos crear el paquete
     op_codes = {
-        "WRQ" : struct.pack('BB', 0, 2),
         "DATA": struct.pack('BB', 0, 3),
     }
 
     #Comprueba que el valor de mss sea correcto
     if(es_potencia(mss)):
 
-        # Enviamos primer paquete WRQ
-        wrq = op_codes["WRQ"] + bytes(mode, "utf-8") + struct.pack('B', 0) + bytes('blocksize', "utf-8") + struct.pack('B', 0) + struct.pack('>H', mss)+ struct.pack('B', 0)
+        # Enviamos primer paquete indicando el blocksize
+        primer_paquete = bytes('blocksize', "utf-8") + struct.pack('B', 0) + struct.pack('>H', mss)+ struct.pack('B', 0)
 
-        # Enviamos la instruccion WRQ i recivimos el OACK del servidor para confirmar la conexion WRQ.
-        # Si el cliente no recive el OACK aplica un timeout i vuelve a enviar el WRQ
+        # Enviamos el primer paquete indicando el mss i recivimos el OACK del servidor para confirmar la conexion.
+        # Si el cliente no recive el OACK aplica un timeout i vuelve a enviar el primer paquete
  
         try:
             # Se envía el paquete WRQ al servidor especificando el nombre del servidor y el puerto de destino.              
-            clientSocket.sendto(wrq, (serverName, serverPort))
-            print("Enviando siguiente paquete: (WRQ, {mode}, blocksize, {mss})".format(mode=mode, mss=mss))
+            clientSocket.sendto(primer_paquete, (serverName, serverPort))
+            print("Enviando siguiente paquete: (blocksize, {})".format(mss))
             # Se activa el temporizador de tiempo de espera para el socket del cliente, se divide el valor de timeout (en milisegundos) entre 1000 para convertirlo a segundos.
             clientSocket.settimeout(timeout/1000)
             # se recibe el paquete OACK del servidor, se guarda en la variable "oack" y se guarda la dirección del servidor en la variable "add"

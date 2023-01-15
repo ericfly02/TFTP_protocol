@@ -24,7 +24,7 @@ try:
     # Especificamos el puerto de recepcion del servidor i definimos variables
     size = 512
     numero_secuencia = 1 # Inicializamos el numero de secuencia a 1
-    numero_secuencia_ack =  1 # Inicializamos el numero de secuencia a 0
+    numero_secuencia_ack =  1 # Inicializamos el numero de secuencia a 1
 
     probabilidad_fallo = 0.5
 
@@ -34,7 +34,7 @@ try:
 
     mensaje, clientAddress = serverSocket.recvfrom(size)
 
-    # Decodificamos el primer paquete recivido para saber si se trata de un GET o un PUT, en funcion si se envia un RRQ o WRQ respectivamente. Tambien observamos si hay algun error
+    # Decodificamos el primer paquete recivido para saber que mss utilizamos
     codigo = struct.pack('BB', 0, mensaje[0] + mensaje[1])
 
     print('Cliente CONNECTADO! {ip}'.format(ip = clientAddress))
@@ -43,23 +43,13 @@ try:
     ############################## PUT #########################################
 
     # Decodificamos el paqeute recivido 
-    modo = ""
-    aux = 2
-
-    # OBTENER EL MODO DEL BLOQUE RRQ
-    for i in mensaje[aux:]:
-        if(i == 0):
-            break
-        modo += chr(i)
-        aux += 1
-        
-    print("MODO = ",modo)
-
-    # OBTENER EL VALOR DEL BLOCKSIZE de la OPCION 1 DEL BLOQUE RRQ
-    size_modo = len(modo)
-    aux = +1+int(size_modo)+1+int(len("blocksize"))+1
-    a=int.from_bytes(mensaje[aux:], "big")
-    #desplazamos el int 8 posiciones porque esta cogiendo del [aux:] 2 bytes=8bits de mas
+    # se utiliza para calcular la posición inicial del tamaño del bloque en el primer paquete recibido del servidor. 
+    # El tamaño del bloque se encuentra después de la cadena "blocksize" en el paquete. La función len() devuelve el 
+    # tamaño de la cadena "blocksize" y se suma 1 para obtener la posición siguiente.
+    aux = int(len("blocksize"))+1
+    # Se utiliza para convertir los bytes de tamaño del bloque en un entero
+    a = int.from_bytes(mensaje[aux:], "big")
+    # Desplazamos el int 8 posiciones porque esta cogiendo del [aux:] 2 bytes=8bits de mas
     size=a>>8
     print("SIZE BLOCK = ",size)
 
@@ -76,8 +66,7 @@ try:
     datos, clientAddress = serverSocket.recvfrom(4+int(size))
 
     print("Esperando a recivir el archivo del cliente con dirección: ", clientAddress)
-        #Moviendo 1 byte del paquete con posicion 3 o 2 conseguimos 
-        #el valor del numero de sequencia 
+    # Moviendo 1 byte del paquete con posicion 3 o 2 conseguimos el valor del numero de sequencia 
     numero_secuencia = datos[3] | datos[2] << 8
     #Guardamos en datos_archivo los datos recividos en el paquete
     datos_archivo = datos[4:]
@@ -145,4 +134,3 @@ try:
 
 except KeyboardInterrupt:
     sys.exit() 
-
