@@ -94,8 +94,6 @@ try:
     file = open("mensaje_usuario.txt", "wb")
 
     while(datos_archivo):
-        #Escribimos en el archivo los datos recividos  
-        file.write(datos_archivo)
 
         # En el caso de que la longitud del archivo sea igual al size maximo de paquetes, enviaremos un paquete
         if(len(datos_archivo) == int(size)):
@@ -109,6 +107,8 @@ try:
                     datos_archivo = datos[4:]
                     print('ACK --> {} es menor que {}'.format(numero_secuencia_ack, numero_secuencia))
                     numero_secuencia_ack += 1
+                    #Escribimos en el archivo los datos recividos  
+                    file.write(datos_archivo)
                     
 
                 if(numero_secuencia != 0):

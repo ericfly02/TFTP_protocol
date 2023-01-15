@@ -1,0 +1,1 @@
+creamos random entre 0 i 100 i si queremos que falle el 5% decimos que si el random es entre 0 i 5, no se envie el paquete. Salta timeout i ya esta
